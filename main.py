@@ -30,6 +30,15 @@ _steps = [
 # This automatically reads in the configuration
 @hydra.main(config_name='config')
 def go(config: DictConfig):
+    """
+    This function is the entry point of the program.
+
+    Args:
+        config (DictConfig): The configuration for the program.
+
+    Returns:
+        None
+    """
 
     # Setup the wandb experiment. All runs will be grouped under this name
     os.environ["WANDB_PROJECT"] = config["main"]["project_name"]

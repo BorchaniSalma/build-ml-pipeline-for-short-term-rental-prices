@@ -56,18 +56,14 @@ def go(args):
 
 
 
-    # with open(args.rf_config) as fp:
-    #     rf_config = json.load(fp)
-    # run.config.update(rf_config)
+
 
     # Fix the random seed for the Random Forest, so we get reproducible results
     rf_config['random_state'] = args.random_seed
 
-    ######################################
-    # Use run.use_artifact(...).file() to get the train and validation artifact (args.trainval_artifact)
-    # and save the returned path in train_local_pat
+    
+    #Save the returned path in train_local_pat
     trainval_local_path = run.use_artifact(args.trainval_artifact).file()
-    ######################################
 
     X = pd.read_csv(trainval_local_path)
     y = X.pop("price")  # this removes the column "price" from X and puts it into y
@@ -85,10 +81,8 @@ def go(args):
     # Then fit it to the X_train, y_train data
     logger.info("Fitting")
 
-    ######################################
     # Fit the pipeline sk_pipe by calling the .fit method on X_train and y_train
     sk_pipe.fit(X_train, y_train)
-    ######################################
 
     # Compute r2 and MAE
     logger.info("Scoring")
@@ -106,13 +100,10 @@ def go(args):
     if os.path.exists("random_forest_dir"):
         shutil.rmtree("random_forest_dir")
 
-    ######################################
     # Save the sk_pipe pipeline as a mlflow.sklearn model in the directory "random_forest_dir"
    
     mlflow.sklearn.save_model(sk_pipe, "random_forest_dir")
-    ######################################
 
-    ######################################
     # Upload the model we just exported to W&B
     # Create an artifact
     artifact = wandb.Artifact(args.output_artifact, type="model_export", description="Exported Random Forest Model")
@@ -171,7 +162,6 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
     # (nor during training). That is not true for neighbourhood_group
     ordinal_categorical_preproc = OrdinalEncoder()
 
-    ######################################
     # Build a pipeline with two steps:
     non_ordinal_categorical_preproc = make_pipeline(
         SimpleImputer(strategy="most_frequent"), OneHotEncoder()
@@ -179,7 +169,6 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
 
     
 
-    ######################################
 
     # Let's impute the numerical columns to make sure we can handle missing values
     # (note that we do not scale because the RF algorithm does not need that)
@@ -232,7 +221,7 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
     # Create random forest
     random_Forest = RandomForestRegressor(**rf_config)
 
-    ######################################
+    
      # Create the inference pipeline.
     sk_pipe = Pipeline(steps=[("preprocessor", preprocessor),("random_forest", random_Forest)])
 

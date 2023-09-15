@@ -15,6 +15,15 @@ logger = logging.getLogger()
 
 
 def go(args):
+    """
+    Download a URL to a local destination and log it as an artifact in Weights & Biases.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments.
+
+    Returns:
+        None
+    """
 
     run = wandb.init(job_type="download_file")
     run.config.update(args)

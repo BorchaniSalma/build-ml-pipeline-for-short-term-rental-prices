@@ -15,6 +15,15 @@ logger = logging.getLogger()
 
 
 def go(args):
+    """
+    Split the provided dataframe into a test set and the remainder.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments.
+
+    Returns:
+        None
+    """
 
     run = wandb.init(job_type="train_val_test_split")
     run.config.update(args)

@@ -21,11 +21,15 @@ logger = logging.getLogger()
 
 def go(args):
     """
-    this function fetch the raw data from wandb and then filter the price column
-    on the basis of the fixed range of values ( 10 to 350 )
-    and convert the datetime feature from object to datatime using pd.to_datetime().
+    Perform basic data cleaning on the input dataset.
 
+    Args:
+        args (argparse.Namespace): Command-line arguments.
+
+    Returns:
+        None
     """
+  
 
     logger.info("Initializing a run")
     # Initializing the run

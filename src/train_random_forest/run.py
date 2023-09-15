@@ -47,9 +47,18 @@ def go(args):
     run.config.update(args)
 
     # Get the Random Forest configuration and update W&B
-    with open(args.rf_config) as fp:
-        rf_config = json.load(fp)
-    run.config.update(rf_config)
+    try:
+        with open(args.rf_config) as fp:
+            rf_config = json.load(fp)
+    except json.JSONDecodeError:
+        logger.warning(f"Failed to load RF configuration from {args.rf_config}. Using default configuration.")
+        rf_config = {"n_estimators": 100, "max_depth": 15, "min_samples_split": 4, "min_samples_leaf": 3, "n_jobs": -1, "criterion": "mae", "max_features": 0.5, "oob_score": True} # default configuration here
+
+
+
+    # with open(args.rf_config) as fp:
+    #     rf_config = json.load(fp)
+    # run.config.update(rf_config)
 
     # Fix the random seed for the Random Forest, so we get reproducible results
     rf_config['random_state'] = args.random_seed
@@ -57,7 +66,7 @@ def go(args):
     ######################################
     # Use run.use_artifact(...).file() to get the train and validation artifact (args.trainval_artifact)
     # and save the returned path in train_local_pat
-    trainval_local_path = # YOUR CODE HERE
+    trainval_local_path = run.use_artifact(args.trainval_artifact).file()
     ######################################
 
     X = pd.read_csv(trainval_local_path)
@@ -78,7 +87,7 @@ def go(args):
 
     ######################################
     # Fit the pipeline sk_pipe by calling the .fit method on X_train and y_train
-    # YOUR CODE HERE
+    sk_pipe.fit(X_train, y_train)
     ######################################
 
     # Compute r2 and MAE
@@ -99,17 +108,22 @@ def go(args):
 
     ######################################
     # Save the sk_pipe pipeline as a mlflow.sklearn model in the directory "random_forest_dir"
-    # HINT: use mlflow.sklearn.save_model
-    # YOUR CODE HERE
+   
+    mlflow.sklearn.save_model(sk_pipe, "random_forest_dir")
     ######################################
 
     ######################################
     # Upload the model we just exported to W&B
-    # HINT: use wandb.Artifact to create an artifact. Use args.output_artifact as artifact name, "model_export" as
-    # type, provide a description and add rf_config as metadata. Then, use the .add_dir method of the artifact instance
-    # you just created to add the "random_forest_dir" directory to the artifact, and finally use
-    # run.log_artifact to log the artifact to the run
-    # YOUR CODE HERE
+    # Create an artifact
+    artifact = wandb.Artifact(args.output_artifact, type="model_export", description="Exported Random Forest Model")
+    artifact.metadata = {"rf_config": rf_config}
+
+    # Add the "random_forest_dir" directory to the artifact
+    artifact.add_dir("random_forest_dir")
+
+    # Log the artifact to the run
+    run.log_artifact(artifact)
+
     ######################################
 
     # Plot feature importance
@@ -119,7 +133,7 @@ def go(args):
     # Here we save r_squared under the "r2" key
     run.summary['r2'] = r_squared
     # Now log the variable "mae" under the key "mae".
-    # YOUR CODE HERE
+    run.summary['mae'] = mae
     ######################################
 
     # Upload to W&B the feture importance visualization
@@ -159,9 +173,12 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
 
     ######################################
     # Build a pipeline with two steps:
-    # 1 - A SimpleImputer(strategy="most_frequent") to impute missing values
-    # 2 - A OneHotEncoder() step to encode the variable
-    non_ordinal_categorical_preproc = # YOUR CODE HERE
+    non_ordinal_categorical_preproc = make_pipeline(
+        SimpleImputer(strategy="most_frequent"), OneHotEncoder()
+    )
+
+    
+
     ######################################
 
     # Let's impute the numerical columns to make sure we can handle missing values
@@ -216,11 +233,8 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
     random_Forest = RandomForestRegressor(**rf_config)
 
     ######################################
-    # Create the inference pipeline. The pipeline must have 2 steps: a step called "preprocessor" applying the
-    # ColumnTransformer instance that we saved in the `preprocessor` variable, and a step called "random_forest"
-    # with the random forest instance that we just saved in the `random_forest` variable.
-    # HINT: Use the explicit Pipeline constructor so you can assign the names to the steps, do not use make_pipeline
-    sk_pipe = # YOUR CODE HERE
+     # Create the inference pipeline.
+    sk_pipe = Pipeline(steps=[("preprocessor", preprocessor),("random_forest", random_Forest)])
 
     return sk_pipe, processed_features
 

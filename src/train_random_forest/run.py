@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """
 This script trains a Random Forest
+
+Date : 09/15/2023
+Author : Salma Borchani
 """
 import argparse
 import logging

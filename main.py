@@ -1,3 +1,13 @@
+"""
+This is our main file which run all of our component
+
+Date:09/15/2023
+Author: Salma Borchani
+
+"""
+
+
+
 import json
 
 import mlflow
@@ -13,10 +23,7 @@ _steps = [
     "data_check",
     "data_split",
     "train_random_forest",
-    # NOTE: We do not include this in the steps so it is not run by mistake.
-    # You first need to promote a model export to "prod" before you can run this,
-    # then you need to run this step explicitly
-#    "test_regression_model"
+    
 ]
 
 
@@ -49,17 +56,38 @@ def go(config: DictConfig):
                 },
             )
 
+       
         if "basic_cleaning" in active_steps:
-            ##################
-            # Implement here #
-            ##################
-            pass
+            # running the basic_cleaning component
+            _ = mlflow.run(
+                os.path.join(hydra.utils.get_original_cwd(), "src", "basic_cleaning"),
+                "main",
+                # version = "main"
+                parameters={
+                    "input_artifact": config["parameters"]["basic_cleaning"]["input_artifact"],
+                    "output_artifact": config["parameters"]["basic_cleaning"]["output_artifact"],
+                    "artifact_type": config["parameters"]["basic_cleaning"]["artifact_type"],
+                    "artifact_description":
+                      config["parameters"]["basic_cleaning"]["artifact_description"],
+                    "min_price": config["etl"]["min_price"],
+                    "max_price": config["etl"]["max_price"]
+                },
+            )
 
         if "data_check" in active_steps:
-            ##################
-            # Implement here #
-            ##################
-            pass
+            # running the data_check component
+            _ = mlflow.run(
+                os.path.join(hydra.utils.get_original_cwd(), "src", "data_check"),
+                "main",
+                # version = "main"
+                parameters={
+                    "csv": config["parameters"]["data_check"]["csv"],
+                    "ref": config["parameters"]["data_check"]["ref"],
+                    "kl_threshold": config["data_check"]["kl_threshold"],
+                    "min_price": config["etl"]["min_price"],
+                    "max_price": config["etl"]["max_price"]
+                }
+            )
 
         if "data_split" in active_steps:
             ##################

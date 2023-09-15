@@ -62,7 +62,6 @@ def go(args):
         "Converting our last_review feature from object to datatime datatype")
     # converting last_review column from object to datetime
     new_data["last_review"] = pd.to_datetime(new_data["last_review"])
-
     # saving the csv file
     new_data.to_csv("clean_sample.csv", index=False)
 
